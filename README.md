@@ -1,4 +1,4 @@
-### Signal Middleware
+# Signal Middleware
 
 Signal Middleware for Redux.
 Example: https://xnimorz.github.io/signal-middleware
@@ -30,7 +30,7 @@ Here is an image to represent the work:
 
 The business logic here is representented by signal-middleware reactions.
 
-## Usage:
+# Usage:
 
 1.  Import signalMiddleware to your store initialization file and add signalMiddleware to the list of middlewares:
 
@@ -81,7 +81,7 @@ addReaction(
 
 Signal-middleware adds abstraction between View and Data layers:
 
-# Async actions
+## Async actions
 
 Signal-middleware allows you to create async functions:
 
@@ -112,7 +112,7 @@ addReaction(ADD_TODO, ({ dispatch }, { text }) => {
 });
 ```
 
-# Getting state
+## Getting state
 
 Signal-middleware provides `{ dispatch, getState }` object as the first argument of your reaction. So you can get access to him.
 
@@ -150,7 +150,7 @@ addReaction(ADD_TODO, ({ dispatch, getState }, { text }) => {
 });
 ```
 
-# Async-await and business logic
+## Async-await and business logic
 
 Let's add to our example some async logic and errors handling:
 
@@ -194,9 +194,9 @@ addReaction(ADD_TODO, async ({ dispatch, getState }, { text }) => {
 
 The last example shows us how we can implement the business logic using `signal-middleware`
 
-## Completed example
+# Completed example
 
-# Postpone callback after async request completes
+### Postpone callback after async request completes
 
 When you write a comment you should clear the text field after server request completes. At the moment you don't know about future id of the comment, so you would add a callback after server request completes. When you use signal-middleware and dispatch a signal action it wraps the signal action with a promise. In reaction you can resolve or reject this promise. And your view layer can subscribe to the promise using `then`. You can see it in our example https://github.com/xnimorz/signal-middleware/master/examples/src/components/AddComment.js
 
@@ -311,13 +311,13 @@ class AddComment extends PureComponent {
 export default connect(null, { addComment })(AddComment);
 ```
 
-## Motivation
+# Motivation
 
 Nowadays, building complicated frontend application requires a plenty of business logic with server requests and so on.
 You can use middlewares such as `redux-thunk` to implement `async actions creator`. However after a definite time interval it would be complicated to work with tons of code in `action creators`. For example, if you want to show an alert to user, when he clicks the button, you wouldn't patch browser engine code, you just add some logic to your own project. You can relate to `action` similarly. `Actions` in redux application are similar to events in browser. Consequently, if some event (`action`) in your project is triggered, you have a reaction for the `action`. The main goal of `signal-middleware` is to give an abstraction for the implementation of a separate business logic.
 
 Some more information about middlewares you can find in a lecture (Russian lang): https://docs.google.com/presentation/d/1qFTB--HrXCU0_nVQ_T4ZlB9CsiXpXQsASc14pctoggA/edit?usp=sharing
 
-## License
+# License
 
 MIT
