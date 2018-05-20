@@ -1,5 +1,4 @@
 import signalMiddleware, { addReaction } from "../src/index";
-import { wrapPromise } from "../src/wrapPromise";
 
 const storeStub = {
   getState: () => ({}),
@@ -54,18 +53,6 @@ describe("signalMiddleware", () => {
         expect(callback).toHaveBeenCalled();
       });
 
-      test("must pass dispatch, setState and payload arguments to call function from its reactions list", () => {
-        const signalName = "test";
-        const payload = {};
-        const callback = jest.fn();
-        addReaction(signalName, callback);
-        actionHandler({
-          signal: signalName,
-          payload
-        });
-        expect(callback).toHaveBeenCalledWith(storeStub, payload, undefined);
-      });
-
       test("must pass dispatch, setState, payload and promiseResolve arguments to call function from its reactions list", () => {
         const signalName = "test";
         const payload = {};
@@ -81,12 +68,10 @@ describe("signalMiddleware", () => {
           expect(typeof reject).toBe("function");
         };
         addReaction(signalName, callback);
-        actionHandler(
-          wrapPromise({
-            signal: signalName,
-            payload
-          })
-        );
+        actionHandler({
+          signal: signalName,
+          payload
+        });
       });
 
       test("must call only nessesary reaction", () => {
@@ -105,6 +90,87 @@ describe("signalMiddleware", () => {
 
         actionHandler({ signal: "first" });
         expect(callback).toHaveBeenCalled();
+      });
+    });
+    describe("dispatch", () => {
+      const actionHandler = nextHandler(action => action);
+
+      test("must return action if action is a plain redux action", () => {
+        const testData = { type: "SOME_ACTION", payload: { foo: "bar" } };
+
+        expect(actionHandler(testData)).toEqual(testData);
+      });
+      test("must return action with promise field if action is a signal action", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", () => {});
+
+        const returnedValue = actionHandler(testData);
+        expect(returnedValue.signal).toEqual(testData.signal);
+        expect(returnedValue.payload).toEqual(testData.payload);
+        expect(returnedValue.promise instanceof Promise).toBe(true);
+      });
+
+      test("dispatch must return a new object", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", () => {});
+
+        const returnedValue = actionHandler(testData);
+        expect(returnedValue).not.toEqual(testData);
+      });
+
+      test("dispatch must not mutate argument", () => {
+        const Obj = { a: 1 };
+        const Obj2 = { a: 1 };
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", () => {});
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue).not.toEqual(Obj);
+        expect(Obj).toEqual(Obj2);
+      });
+    });
+    describe("signalResolver", () => {
+      const actionHandler = nextHandler(action => action);
+      test("must rejects promise if signal action calls reject", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", (store, action, signalResolver) => {
+          signalResolver.reject("reason");
+        });
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue.promise).rejects.toBe("reason");
+      });
+      test("must resolves promise if signal action calls resolve", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", (store, action, signalResolver) => {
+          signalResolver.resolve("value");
+        });
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue.promise).resolves.toBe("value");
       });
     });
   });

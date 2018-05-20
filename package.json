@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description":
     "Redux middleware. A place to store your business logic and async code. ",
-  "main": "./lib/index.js",
+  "main": "./lib",
   "scripts": {
     "test": "jest",
     "build": "babel ./src --out-dir ./lib"
@@ -30,6 +30,7 @@
   "homepage": "https://github.com/xnimorz/signal-middleware#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "jest": "^22.4.3"
   },
