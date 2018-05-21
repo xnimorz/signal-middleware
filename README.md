@@ -13,7 +13,21 @@ or
 yarn add signal-middleware
 ```
 
-Signal-middleware is created to give an abstraction.
+Signal-middleware is created to give a place for async logic of your application and an abstraction between View and Data layers.
+
+# Contents
+
+* [Intro](#intro)
+* [Usage](#usage)
+  * [Getting started](#getting-started)
+  * [Async actions](#async-actions)
+  * [Getting state](#getting-state)
+  * [Async-await and business logic](#async-await-and-business-logic)
+* [Completed example](#completed-example)
+* [Motivation](#motivation)
+
+# Intro
+
 In general, application can be divided into 3 parts:
 
 * view logic
@@ -31,6 +45,8 @@ Here is an image to represent the work:
 The business logic here is representented by signal-middleware reactions.
 
 # Usage:
+
+## Getting started
 
 1.  Import signalMiddleware to your store initialization file and add signalMiddleware to the list of middlewares:
 
@@ -69,17 +85,17 @@ import { addReaction } from "signal-middleware";
 
 addReaction(
   SIGNAL_ACTION_KEY,
-  ({ getState, dispatch }, payload, signalResolver) => {
+  ({ getState, dispatch }, payload, { resolve, reject }) => {
     // Paste your code here
     // Dispatch new action via dispatch
     // Get your current store state via getState
     // Your action data is in payload
-    // You can resolve or reject a promise via signalResolver methods resolve and reject
+    // You can resolve or reject a promise via 3 argument methods resolve and reject
   }
 );
 ```
 
-Signal-middleware adds abstraction between View and Data layers:
+Signal-middleware adds abstraction between View and Data layers.
 
 ## Async actions
 
