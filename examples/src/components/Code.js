@@ -9,4 +9,7 @@ export default styled.pre`
   margin-left: 20px;
   max-width: 660px;
   overflow: auto;
+  @media (max-width: 640px) {
+    margin-left: 0;
+  }
 `;
