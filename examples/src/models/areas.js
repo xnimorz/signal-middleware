@@ -11,7 +11,7 @@ import {
 import axios from "axios";
 import { addReaction } from "signal-middleware";
 
-addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, payload) => {
+addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, { payload }) => {
   // You can dispatch as many actions in signalMiddleware as you need
   dispatch(requestAreas());
 

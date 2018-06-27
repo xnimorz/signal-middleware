@@ -17,22 +17,23 @@ Signal-middleware is created to give a place for async logic of your application
 
 # Contents
 
-* [Intro](#intro)
-* [Usage](#usage)
-  * [Getting started](#getting-started)
-  * [Async actions](#async-actions)
-  * [Getting state](#getting-state)
-  * [Async-await and business logic](#async-await-and-business-logic)
-* [Completed example](#completed-example)
-* [Motivation](#motivation)
+- [Intro](#intro)
+- [Usage](#usage)
+  - [Getting started](#getting-started)
+  - [Async actions](#async-actions)
+  - [Getting state](#getting-state)
+  - [Async-await and business logic](#async-await-and-business-logic)
+  - [Dispatch cancellation](#dispatch-cancellation)
+- [Completed example](#completed-example)
+- [Motivation](#motivation)
 
 # Intro
 
 In general, application can be divided into 3 parts:
 
-* view logic
-* business logic
-* data logic
+- view logic
+- business logic
+- data logic
 
 Signal action provides information between view and business layers.
 Classic action provides information between business and data layers.
@@ -85,7 +86,7 @@ import { addReaction } from "signal-middleware";
 
 addReaction(
   SIGNAL_ACTION_KEY,
-  ({ getState, dispatch }, payload, { resolve, reject }) => {
+  ({ getState, dispatch }, action, { resolve, reject }) => {
     // Paste your code here
     // Dispatch new action via dispatch
     // Get your current store state via getState
@@ -120,7 +121,7 @@ const receiveTodo = text => ({
 });
 
 // Add reaction to ADD_TODO signal
-addReaction(ADD_TODO, ({ dispatch }, { text }) => {
+addReaction(ADD_TODO, ({ dispatch }, { payload: { text } }) => {
   setTimeout(() => {
     // Here we can invoke actions using dispatch
     dispatch(receiveTodo(text));
@@ -154,7 +155,7 @@ const receiveTodo = text => ({
 
 // Reactions are the good place for your project business logic.
 // It's separate from view and data logic. View layer works with business logic through the signal actions, and business logic layer works with data logic through the classic actions.
-addReaction(ADD_TODO, ({ dispatch, getState }, { text }) => {
+addReaction(ADD_TODO, ({ dispatch, getState }, { payload: { text } }) => {
   setTimeout(() => {
     // Getting our current state
     if (getState().todos.some(todo => todo.text === text)) {
@@ -182,6 +183,7 @@ const FAIL_TODO = "FAIL_TODO";
 const addTodoSignal = text => ({
   signal: ADD_TODO,
   payload: { text }
+  cancelType: 'PAGE',
 });
 
 // Classic action works with store
@@ -196,7 +198,7 @@ const pendingTodo = () => ({
 
 // Reactions are the good place for your project business logic.
 // It's separate from view and data logic. View layer works with business logic through the signal actions, and business logic layer works with data logic through the classic actions.
-addReaction(ADD_TODO, async ({ dispatch, getState }, { text }) => {
+addReaction(ADD_TODO, async ({ dispatch, getState }, { payload: { text } }) => {
   try {
     // You can dispatch any number of actions
     dispatch(pendingTodo(result));
@@ -208,7 +210,24 @@ addReaction(ADD_TODO, async ({ dispatch, getState }, { text }) => {
 });
 ```
 
-The last example shows us how we can implement the business logic using `signal-middleware`
+This example shows us how we can implement the business logic using `signal-middleware`
+
+## Dispatch cancellation
+
+When user works with web-site, he can often click to another page before previous page request has been loaded.
+In such case, it would be a good idea to cancel previous `dispatch` action.
+
+You can group your signal actions by adding `cancelType` to them. So your action can be:
+
+```javascript
+{
+  signal: 'FETCH_COMMENTS_PAGE',
+  payload: {page: 1}
+  cancelType: 'PAGE'
+}
+```
+
+If you setted `cancelType` only the latest signal action handler with the same `cancelType` field can dispatch next action. Other handlers will throw a `CancelError` object. Note, that you can handle such error and dispatch actions after them. It could be helpfull if you want to dispatch actions after this process
 
 # Completed example
 
@@ -258,7 +277,7 @@ import { addReaction } from "signal-middleware";
 
 addReaction(
   ADD_COMMENT_SIGNAL,
-  ({ getState, dispatch }, payload, signalResolver) => {
+  ({ getState, dispatch }, { payload }, signalResolver) => {
     // You can dispatch as many actions in signalMiddleware as you need
     dispatch(requestComment());
 
@@ -324,7 +343,10 @@ class AddComment extends PureComponent {
   }
 }
 
-export default connect(null, { addComment })(AddComment);
+export default connect(
+  null,
+  { addComment }
+)(AddComment);
 ```
 
 # Motivation

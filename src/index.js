@@ -1,3 +1,5 @@
+import enhanceDispatchWithCancellationToken from "./enhancedDispatcher";
+
 // Reactions store
 const reactions = {};
 
@@ -16,8 +18,9 @@ export const addReaction = (signalName, signalReaction) => {
  * {
  *   signal: String,
  *   payload: {your data is here}
- *   promise: [OPTIONAL] Promise,
+ *   promise: Promise,
  *   signalResolver: { resolve: _resolve, reject: _reject }
+ *   cancelType: [OPTIONAL] String
  * }
  */
 export default ({ getState, dispatch }) => next => action => {
@@ -29,8 +32,15 @@ export default ({ getState, dispatch }) => next => action => {
     throw new Error(`There is no handler for ${action.signal} signal`, action);
   }
 
+  let dispatchMethod = dispatch;
+
+  // We should enhance dispatch method only for signal actions with cancelType string
+  if (action.cancelType) {
+    dispatchMethod = enhanceDispatchWithCancellationToken(dispatch, action);
+  }
+
   const promise = new Promise((resolve, reject) => {
-    reactions[action.signal]({ getState, dispatch }, action.payload, {
+    reactions[action.signal]({ getState, dispatch: dispatchMethod }, action, {
       resolve,
       reject
     });

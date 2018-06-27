@@ -11,7 +11,7 @@ import { addReaction } from "signal-middleware";
 
 addReaction(
   ADD_COMMENT_SIGNAL,
-  ({ getState, dispatch }, payload, signalResolver) => {
+  ({ getState, dispatch }, { payload }, signalResolver) => {
     // You can dispatch as many actions in signalMiddleware as you need
     dispatch(requestComment());
 

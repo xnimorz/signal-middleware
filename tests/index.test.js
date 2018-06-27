@@ -1,4 +1,5 @@
 import signalMiddleware, { addReaction } from "../src/index";
+import CancelError from "../src/cancelError";
 
 const storeStub = {
   getState: () => ({}),
@@ -171,6 +172,53 @@ describe("signalMiddleware", () => {
         const returnedValue = actionHandler(testData);
 
         expect(returnedValue.promise).resolves.toBe("value");
+      });
+    });
+    describe("action with cancelType", () => {
+      const actionHandler = nextHandler(action => action);
+      test("must return action as usual", () => {
+        const testData = {
+          signal: "SIGNAL_ACTION_WITH_CANCEL_TYPE",
+          payload: { foo: "bar" },
+          cancelType: "page"
+        };
+
+        addReaction("SIGNAL_ACTION_WITH_CANCEL_TYPE", (store, action) => {
+          expect(action).toEqual(testData);
+        });
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue.signal).toEqual(testData.signal);
+        expect(returnedValue.payload).toEqual(testData.payload);
+        expect(returnedValue.cancelType).toEqual(testData.cancelType);
+        expect(returnedValue.promise instanceof Promise).toBe(true);
+      });
+
+      test("must cancel previous dispatch from signal action processing, if another action with same cancelType has called", done => {
+        expect.assertions(3);
+
+        const testData = {
+          signal: "SINGAL",
+          payload: { foo: "bar" },
+          cancelType: "page"
+        };
+
+        addReaction("SINGAL", ({ dispatch }, action) => {
+          process.nextTick(() => {
+            try {
+              dispatch({ type: "STANDART_ACTION" });
+              done();
+            } catch (e) {
+              expect(e instanceof CancelError).toEqual(true);
+              expect(e.isCancelledByType).toBe(true);
+              expect(e.cancelType).toBe("page");
+            }
+          });
+        });
+
+        actionHandler(testData);
+        actionHandler(testData);
       });
     });
   });
