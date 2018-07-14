@@ -29,29 +29,29 @@ export const requestComment = () => ({
       {`
 `}
       <strong>{`
-addReaction(ADD_COMMENT_SIGNAL, ({ getState, dispatch }, payload, signalResolver) => {`}</strong>
+addReaction(ADD_COMMENT_SIGNAL, ({ getState, dispatch }, payload) => {`}</strong>
       {`
-  // You can dispatch as many actions 
+  // You can dispatch as many actions
   // in signalMiddleware as you need      
   dispatch(requestComment());    
-  
-  // Simulate async request
-  setTimeout(() => {
-    // Simulate server work:
-    const comments = getState().comments.data;
-    const newId = Math.max(...comments.map(comment => comment.id), 0) + 1;
 
-    // You can resolve or reject signalAction and 
-    // handle promise in view layer 
-    // (look to AddComment.js component)`}
-      <strong>{`
-    signalResolver.resolve();`}</strong>
-      {`
+  // Return a promise from signal handler.
+  // The promise is handled in addComment component to clear the field.
+  return new Promise(resolve => {
+    // Simulate async request
+    setTimeout(() => {
+      // Simulate server work:
+      const comments = getState().comments.data;
+      const newId = Math.max(...comments.map(comment => comment.id), 0) + 1;
 
-    // Dispatch new action
-    dispatch(receiveComment({ id: newId, text: payload }));
-    
-  }, Math.random() * 2000);
+      // You can resolve or reject signalAction and
+      // handle promise in view layer (look to AddComment.js component)
+      resolve();
+
+      // Dispatch new action
+      dispatch(receiveComment({ id: newId, text: payload }));
+    }, Math.random() * 1500);
+  });
 });
 
 `}
@@ -64,8 +64,8 @@ addComment = () => {
   this.props
     .addComment(this.textArea.current.value)
     `}
-      <strong>{`.promise.then(`}</strong>
-      {`() => (this.textArea.current.value = ""));
+      <strong>{`.then(() => (this.textArea.current.value = ""));`}</strong>
+      {`
 };
 
 `}

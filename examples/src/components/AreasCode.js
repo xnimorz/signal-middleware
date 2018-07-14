@@ -40,6 +40,7 @@ addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, payload) => {`}</strong>
       dispatch(receiveAreas(data));
     } catch (e) {
       // Here we can handle errors
+      return Promise.reject();
     }
   });
   
@@ -61,6 +62,23 @@ addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, payload) => {`}</strong>
         return state;
     }
   }  
+
+  `}
+      <strong>{`components/Areas.js (only loadAreas method):`}</strong>
+      {`
+
+loadAreas = () => {
+  this.setState({ loading: true });
+  this.props.fetchAreas().then(
+    () => {
+      this.setState({ loading: false });
+    },
+    () => {
+      // we also can show error to user in view, change loading state and etc.
+      this.setState({ loading: false });
+    }
+  );
+};
 
 `}
     </Code>

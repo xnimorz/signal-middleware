@@ -17,22 +17,22 @@ Signal-middleware is created to give a place for async logic of your application
 
 # Contents
 
-* [Intro](#intro)
-* [Usage](#usage)
-  * [Getting started](#getting-started)
-  * [Async actions](#async-actions)
-  * [Getting state](#getting-state)
-  * [Async-await and business logic](#async-await-and-business-logic)
-* [Completed example](#completed-example)
-* [Motivation](#motivation)
+- [Intro](#intro)
+- [Usage](#usage)
+  - [Getting started](#getting-started)
+  - [Async actions](#async-actions)
+  - [Getting state](#getting-state)
+  - [Async-await and business logic](#async-await-and-business-logic)
+- [Completed example](#completed-example)
+- [Motivation](#motivation)
 
 # Intro
 
 In general, application can be divided into 3 parts:
 
-* view logic
-* business logic
-* data logic
+- view logic
+- business logic
+- data logic
 
 Signal action provides information between view and business layers.
 Classic action provides information between business and data layers.
@@ -83,16 +83,13 @@ export const signalActionCreator = data => ({
 ```javascript
 import { addReaction } from "signal-middleware";
 
-addReaction(
-  SIGNAL_ACTION_KEY,
-  ({ getState, dispatch }, payload, { resolve, reject }) => {
-    // Paste your code here
-    // Dispatch new action via dispatch
-    // Get your current store state via getState
-    // Your action data is in payload
-    // You can resolve or reject a promise via 3 argument methods resolve and reject
-  }
-);
+addReaction(SIGNAL_ACTION_KEY, ({ getState, dispatch }, payload) => {
+  // Paste your code here
+  // Dispatch new action via dispatch
+  // Get your current store state via getState
+  // Your action data is in payload
+  // You can return a promise from this function, to handle it from dispatch e.g. dispatch({signal: SIGNAL_ACTION_KEY}).then(() => {do some})
+});
 ```
 
 Signal-middleware adds abstraction between View and Data layers.
@@ -195,7 +192,7 @@ const pendingTodo = () => ({
 });
 
 // Reactions are the good place for your project business logic.
-// It's separate from view and data logic. View layer works with business logic through the signal actions, and business logic layer works with data logic through the classic actions.
+// It's separated from view and data logic. View layer works with business logic through the signal actions, and business logic layer works with data logic through the classic actions.
 addReaction(ADD_TODO, async ({ dispatch, getState }, { text }) => {
   try {
     // You can dispatch any number of actions
@@ -214,7 +211,13 @@ The last example shows us how we can implement the business logic using `signal-
 
 ### Postpone callback after async request completes
 
-When you write a comment you should clear the text field after server request completes. At the moment you don't know about future id of the comment, so you would add a callback after server request completes. When you use signal-middleware and dispatch a signal action it wraps the signal action with a promise. In reaction you can resolve or reject this promise. And your view layer can subscribe to the promise using `then`. You can see it in our example https://github.com/xnimorz/signal-middleware/master/examples/src/components/AddComment.js
+When you write a comment you should clear the text field after server request completes. At the moment you don't know about future id of the comment, so you would add a callback after server request completes. When you use signal-middleware and dispatch a signal action you can use `async-await` or directly return a promise from signal handler. Your view layer can subscribe to the promise using `then`. You can see it in our examples:
+
+1.  Return a promise from signal handler directly: https://github.com/xnimorz/signal-middleware/master/examples/src/components/AddComment.js (with direct Promise wrapping)
+2.  Declare `async` function to wrap it with promise (becouse async-await functions return a promise). You can see this example below this text or here:
+
+- View: https://github.com/xnimorz/signal-middleware/master/examples/src/components/Areas.js
+- Logic: https://github.com/xnimorz/signal-middleware/master/examples/src/models/areas.js
 
 Let's write a file with actions and actionCreators:
 
@@ -256,21 +259,22 @@ import {
 
 import { addReaction } from "signal-middleware";
 
-addReaction(
-  ADD_COMMENT_SIGNAL,
-  ({ getState, dispatch }, payload, signalResolver) => {
-    // You can dispatch as many actions in signalMiddleware as you need
-    dispatch(requestComment());
+addReaction(ADD_COMMENT_SIGNAL, async ({ getState, dispatch }, payload) => {
+  // You can dispatch as many actions in signalMiddleware as you need
+  dispatch(requestComment());
 
-    axios.post("/url/to/comments", { comment: payload }).then(result => {
-      // You can resolve or reject signalAction and
-      // handle promise in view layer (look to AddComment.js component)
-      signalResolver.resolve();
-      // Dispatch new action to store
-      dispatch(receiveComment({ id: newId, text: payload }));
-    });
+  try {
+    const { data } = await axios.post("/url/to/comments", { comment: payload });
+    const comment = { id: data.id, text: data.text };
+    // Dispatch new action to store
+    dispatch(receiveComment(comment));
+    // You can resolve or reject action and
+    // handle promise in view layer (look to AddComment.js component)
+    return comment;
+  } catch (e) {
+    return Promise.reject();
   }
-);
+});
 
 export default function comments(state = { status: DIRTY, data: [] }, action) {
   switch (action.type) {
@@ -307,11 +311,11 @@ class AddComment extends PureComponent {
   textArea = React.createRef();
 
   addComment = () => {
-    // We wrap our signal action with promise,
-    // so we can clear field after async request comes from server
+    // We created async function as signal handler. Signal handler result will be received as returned value from actions dispatching
+    // So we can clear field after async request comes from server
     this.props
       .addComment(this.textArea.current.value)
-      .promise.then(() => (this.textArea.current.value = ""));
+      .then(() => (this.textArea.current.value = ""));
   };
 
   render() {
@@ -324,7 +328,10 @@ class AddComment extends PureComponent {
   }
 }
 
-export default connect(null, { addComment })(AddComment);
+export default connect(
+  null,
+  { addComment }
+)(AddComment);
 ```
 
 # Motivation

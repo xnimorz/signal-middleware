@@ -11,26 +11,33 @@ const El = styled.div`
   width: 300px;
 `;
 
-const List = styled.ul``;
-
-const Item = styled.li``;
-
 class Areas extends PureComponent {
+  state = { loading: false };
   loadAreas = () => {
-    this.props.fetchAreas();
+    this.setState({ loading: true });
+    this.props.fetchAreas().then(
+      () => {
+        this.setState({ loading: false });
+      },
+      () => {
+        // we also can show error to user in view, change loading state and etc.
+        this.setState({ loading: false });
+      }
+    );
   };
   clearAreas = () => {
     this.props.clearAreas();
   };
   renderList(areas) {
+    if (this.state.loading) {
+      return <div>Loading...</div>;
+    }
     if (areas.status === DIRTY) {
       return null;
     }
 
     return (
-      <List>
-        {areas.data.map(area => <Item key={area.id}>{area.name}</Item>)}
-      </List>
+      <ul>{areas.data.map(area => <li key={area.id}>{area.name}</li>)}</ul>
     );
   }
   render() {

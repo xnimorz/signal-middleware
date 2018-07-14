@@ -9,12 +9,12 @@ import {
 
 import { addReaction } from "signal-middleware";
 
-addReaction(
-  ADD_COMMENT_SIGNAL,
-  ({ getState, dispatch }, payload, signalResolver) => {
-    // You can dispatch as many actions in signalMiddleware as you need
-    dispatch(requestComment());
+addReaction(ADD_COMMENT_SIGNAL, ({ getState, dispatch }, payload) => {
+  // You can dispatch as many actions in signalMiddleware as you need
+  dispatch(requestComment());
 
+  // Return a promise from signal handler. The promise is handled in addComment component to clear the field.
+  return new Promise(resolve => {
     // Simulate async request
     setTimeout(() => {
       // Simulate server work:
@@ -23,13 +23,13 @@ addReaction(
 
       // You can resolve or reject signalAction and
       // handle promise in view layer (look to AddComment.js component)
-      signalResolver.resolve();
+      resolve();
 
       // Dispatch new action
       dispatch(receiveComment({ id: newId, text: payload }));
-    }, Math.random() * 2000);
-  }
-);
+    }, Math.random() * 1500);
+  });
+});
 
 export default function comments(state = { status: DIRTY, data: [] }, action) {
   switch (action.type) {

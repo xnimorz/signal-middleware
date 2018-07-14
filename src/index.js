@@ -29,15 +29,5 @@ export default ({ getState, dispatch }) => next => action => {
     throw new Error(`There is no handler for ${action.signal} signal`, action);
   }
 
-  const promise = new Promise((resolve, reject) => {
-    reactions[action.signal]({ getState, dispatch }, action.payload, {
-      resolve,
-      reject
-    });
-  });
-
-  return {
-    ...action,
-    promise
-  };
+  return reactions[action.signal]({ getState, dispatch }, action.payload);
 };

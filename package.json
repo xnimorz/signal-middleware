@@ -1,8 +1,7 @@
 {
   "name": "signal-middleware",
-  "version": "1.0.0",
-  "description":
-    "Redux middleware. A place to store your business logic and async code. ",
+  "version": "2.0.0",
+  "description": "Redux middleware. A place to store your business logic and async code.",
   "main": "./lib",
   "scripts": {
     "test": "jest",

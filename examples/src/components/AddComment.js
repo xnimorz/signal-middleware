@@ -19,7 +19,7 @@ class AddComment extends PureComponent {
     // so we can clear field after async request comes from server
     this.props
       .addComment(this.textArea.current.value)
-      .promise.then(() => (this.textArea.current.value = ""));
+      .then(() => (this.textArea.current.value = ""));
   };
 
   submitByEnterKey = e => {
@@ -42,4 +42,7 @@ class AddComment extends PureComponent {
   }
 }
 
-export default connect(null, { addComment })(AddComment);
+export default connect(
+  null,
+  { addComment }
+)(AddComment);

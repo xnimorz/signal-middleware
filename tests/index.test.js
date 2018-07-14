@@ -27,6 +27,7 @@ describe("signalMiddleware", () => {
           expect(action).toEqual(actionData);
         })(actionData);
       });
+
       test("must pass action to next if there no Object", () => {
         const actionData = function() {};
 
@@ -34,12 +35,14 @@ describe("signalMiddleware", () => {
           expect(action).toEqual(actionData);
         })(actionData);
       });
+
       test("must return the return value of next if there no signal field in the action", () => {
         const actionData = "test";
 
         expect(nextHandler(action => action)(actionData)).toEqual(actionData);
       });
     });
+
     describe("handle signal action", () => {
       const actionHandler = nextHandler(() => {});
 
@@ -53,19 +56,13 @@ describe("signalMiddleware", () => {
         expect(callback).toHaveBeenCalled();
       });
 
-      test("must pass dispatch, setState, payload and promiseResolve arguments to call function from its reactions list", () => {
+      test("must pass dispatch, setState and payload arguments to call function from its reactions list", () => {
         const signalName = "test";
         const payload = {};
-        const callback = (
-          { dispatch, getState },
-          payload,
-          { resolve, reject }
-        ) => {
+        const callback = ({ dispatch, getState }, payload) => {
           expect(typeof dispatch).toBe("function");
           expect(typeof getState).toBe("function");
           expect(payload).toEqual(payload);
-          expect(typeof resolve).toBe("function");
-          expect(typeof reject).toBe("function");
         };
         addReaction(signalName, callback);
         actionHandler({
@@ -92,6 +89,7 @@ describe("signalMiddleware", () => {
         expect(callback).toHaveBeenCalled();
       });
     });
+
     describe("dispatch", () => {
       const actionHandler = nextHandler(action => action);
 
@@ -100,18 +98,17 @@ describe("signalMiddleware", () => {
 
         expect(actionHandler(testData)).toEqual(testData);
       });
-      test("must return action with promise field if action is a signal action", () => {
+
+      test("must return data, that returned from signal handler", () => {
         const testData = {
           signal: "SOME_SIGNAL_ACTION",
           payload: { foo: "bar" }
         };
 
-        addReaction("SOME_SIGNAL_ACTION", () => {});
+        addReaction("SOME_SIGNAL_ACTION", () => "data");
 
         const returnedValue = actionHandler(testData);
-        expect(returnedValue.signal).toEqual(testData.signal);
-        expect(returnedValue.payload).toEqual(testData.payload);
-        expect(returnedValue.promise instanceof Promise).toBe(true);
+        expect(returnedValue).toBe("data");
       });
 
       test("dispatch must return a new object", () => {
@@ -142,35 +139,71 @@ describe("signalMiddleware", () => {
         expect(Obj).toEqual(Obj2);
       });
     });
-    describe("signalResolver", () => {
+
+    describe("return data from signal handler", () => {
       const actionHandler = nextHandler(action => action);
-      test("must rejects promise if signal action calls reject", () => {
+
+      test("Must return any data from signal handler", () => {
         const testData = {
           signal: "SOME_SIGNAL_ACTION",
           payload: { foo: "bar" }
         };
 
-        addReaction("SOME_SIGNAL_ACTION", (store, action, signalResolver) => {
-          signalResolver.reject("reason");
+        addReaction("SOME_SIGNAL_ACTION", (store, action) => {
+          return "some data";
         });
 
         const returnedValue = actionHandler(testData);
 
-        expect(returnedValue.promise).rejects.toBe("reason");
+        expect(returnedValue).toEqual("some data");
       });
-      test("must resolves promise if signal action calls resolve", () => {
+
+      test("must handle promise rejection", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction("SOME_SIGNAL_ACTION", (store, action) => {
+          return Promise.reject("reason");
+        });
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue).rejects.toBe("reason");
+      });
+
+      test("must handle promise if signal action returns resolved promise", () => {
         const testData = {
           signal: "SOME_SIGNAL_ACTION",
           payload: { foo: "bar" }
         };
 
         addReaction("SOME_SIGNAL_ACTION", (store, action, signalResolver) => {
-          signalResolver.resolve("value");
+          return Promise.resolve("value");
         });
 
         const returnedValue = actionHandler(testData);
 
-        expect(returnedValue.promise).resolves.toBe("value");
+        expect(returnedValue).resolves.toBe("value");
+      });
+
+      test("must corretly handle async-await functoins (just for example)", () => {
+        const testData = {
+          signal: "SOME_SIGNAL_ACTION",
+          payload: { foo: "bar" }
+        };
+
+        addReaction(
+          "SOME_SIGNAL_ACTION",
+          async (store, action, signalResolver) => {
+            return "value";
+          }
+        );
+
+        const returnedValue = actionHandler(testData);
+
+        expect(returnedValue).resolves.toBe("value");
       });
     });
   });

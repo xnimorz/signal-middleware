@@ -11,6 +11,8 @@ import {
 import axios from "axios";
 import { addReaction } from "signal-middleware";
 
+// `async` function returns a promise.
+// If you don't throw a error or return `promise.reject` the promise will be fulfilled
 addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, payload) => {
   // You can dispatch as many actions in signalMiddleware as you need
   dispatch(requestAreas());
@@ -21,6 +23,7 @@ addReaction(FETCH_AREAS_SIGNAL, async ({ dispatch }, payload) => {
     dispatch(receiveAreas(data));
   } catch (e) {
     // Here we can handle errors
+    return Promise.reject();
   }
 });
 
