@@ -9,13 +9,5 @@ import switcher from "../models/switcher";
 const middlewares = [logger, signalMiddleware];
 
 export default function configureStore() {
-  const store = createStore(
-    combineReducers({
-      comments,
-      areas,
-      switcher
-    }),
-    applyMiddleware(...middlewares)
-  );
-  return store;
+  const store = createStore();    
 }
